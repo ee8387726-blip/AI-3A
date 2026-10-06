@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新城遊戲：經濟與宏觀調控主題建設大賽</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <!-- Canvas Confetti for Celebration -->
+  <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+  <!-- Google Fonts -->
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      font-family: 'Noto Sans TC', sans-serif;
+      user-select: none;
+    }
+    .custom-scrollbar::-webkit-scrollbar {
+      width: 6px;
+    }
+    .custom-scrollbar::-webkit-scrollbar-track {
+      background: rgba(15, 23, 42, 0.6);
+    }
+    .custom-scrollbar::-webkit-scrollbar-thumb {
+      background: #3b82f6;
+      border-radius: 3px;
+    }
+    .pulse-glow {
+      box-shadow: 0 0 25px rgba(59, 130, 246, 0.5);
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0px); }
+      50% { transform: translateY(-8px); }
+    }
+    .animate-float {
+      animation: float 4s ease-in-out infinite;
+    }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col justify-between overflow-x-hidden">
+
+  <!-- Top Navigation / Header Banner -->
+  <header class="w-full bg-slate-900/90 border-b border-slate-800 backdrop-blur-md sticky top-0 z-50 px-4 py-3 shadow-lg">
+    <div class="max-w-6xl mx-auto flex justify-between items-center">
+      <div class="flex items-center space-x-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 to-cyan-400 flex items-center justify-center text-white shadow-md">
+          <i class="fa-solid font-bold text-xl fa-city"></i>
+        </div>
+        <div>
+          <h1 class="font-black text-lg md:text-xl tracking-wide bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-teal-300 to-indigo-300">
+            新城建設指南：宏觀調控篇
+          </h1>
+          <p class="text-xs text-slate-400 hidden sm:block">Teams 互動式經濟學挑戰賽</p>
+        </div>
+      </div>
+
+      <div class="flex items-center space-x-4">
+        <!-- City Budget/Score Display -->
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl px-3 py-1.5 flex items-center space-x-2">
+          <i class="fa-solid fa-coins text-amber-400 text-lg animate-pulse"></i>
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">建設資金</div>
+            <div id="score-display" class="text-sm md:text-base font-black text-amber-300">0 M</div>
+          </div>
+        </div>
+
+        <!-- Progress Indicator -->
+        <div class="bg-slate-800/80 border border-slate-700/60 rounded-xl px-3 py-1.5 flex items-center space-x-2">
+          <i class="fa-solid fa-map-location-dot text-blue-400 text-lg"></i>
+          <div>
+            <div class="text-[10px] text-slate-400 uppercase font-bold tracking-wider">開發進度</div>
+            <div id="progress-text" class="text-sm md:text-base font-black text-blue-300">0 / 5</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Content Layout -->
+  <main class="max-w-6xl w-full mx-auto p-3 sm:p-6 flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+    
+    <!-- LEFT PANEL: Interactive City Map & District Building (5 Cols on large) -->
+    <section class="lg:col-span-5 bg-slate-900/80 border border-slate-800 rounded-3xl p-4 sm:p-5 shadow-2xl relative overflow-hidden flex flex-col justify-between">
+      <div>
+        <div class="flex justify-between items-center mb-4">
+          <h2 class="text-base sm:text-lg font-bold text-slate-200 flex items-center gap-2">
+            <i class="fa-solid fa-map-marked-alt text-teal-400"></i> 新城市區開發地圖
+          </h2>
+          <span id="mayor-title" class="text-xs px-2.5 py-1 rounded-full bg-slate-800 text-slate-300 font-semibold border border-slate-700">
+            見習市長
+          </span>
+        </div>
+
+        <!-- Interactive City Map SVG Graphics -->
+        <div class="relative w-full aspect-[4/3] bg-gradient-to-b from-slate-950 to-slate-900 rounded-2xl border border-slate-800/80 p-3 overflow-hidden shadow-inner flex flex-col justify-between">
+          <!-- Background Grid Overlay -->
+          <div class="absolute inset-0 bg-[linear-gradient(to_right,#1e293b_1px,transparent_1px),linear-gradient(to_bottom,#1e293b_1px,transparent_1px)] bg-[size:2rem_2rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-40"></div>
+
+          <!-- Connecting Road Network SVG -->
+          <svg class="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M 60 210 Q 120 180 180 140 T 300 100 T 220 50" fill="none" stroke="#334155" stroke-width="6" stroke-dasharray="6,6" />
+            <path id="road-active-path" d="M 60 210 Q 120 180 180 140 T 300 100 T 220 50" fill="none" stroke="#3b82f6" stroke-width="6" stroke-dasharray="300" stroke-dashoffset="300" class="transition-all duration-1000 ease-out" />
+          </svg>
+
+          <!-- 5 City Districts Pins & Badges -->
+          <div class="relative z-10 grid grid-cols-2 gap-2 h-full">
+            
+            <!-- District 1 -->
+            <div id="district-1" class="col-span-1 flex flex-col items-center justify-center p-2 rounded-xl border border-dashed border-slate-700/60 bg-slate-900/50 backdrop-blur-sm transition-all duration-500">
+              <div class="district-icon w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 text-lg shadow">
+                <i class="fa-solid fa-cat"></i>
+              </div>
+              <span class="text-[11px] font-bold text-slate-400 mt-1">1. 猫論廣場</span>
+              <span class="district-status text-[9px] text-slate-500">待開發</span>
+            </div>
+
+            <!-- District 2 -->
+            <div id="district-2" class="col-span-1 flex flex-col items-center justify-center p-2 rounded-xl border border-dashed border-slate-700/60 bg-slate-900/50 backdrop-blur-sm transition-all duration-500">
+              <div class="district-icon w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 text-lg shadow">
+                <i class="fa-solid fa-gamepad"></i>
+              </div>
+              <span class="text-[11px] font-bold text-slate-400 mt-1">2. 遙控控制中心</span>
+              <span class="district-status text-[9px] text-slate-500">待開發</span>
+            </div>
+
+            <!-- District 3 -->
+            <div id="district-3" class="col-span-1 flex flex-col items-center justify-center p-2 rounded-xl border border-dashed border-slate-700/60 bg-slate-900/50 backdrop-blur-sm transition-all duration-500">
+              <div class="district-icon w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 text-lg shadow">
+                <i class="fa-solid fa-scale-balanced"></i>
+              </div>
+              <span class="text-[11px] font-bold text-slate-400 mt-1">3. 市場政策總部</span>
+              <span class="district-status text-[9px] text-slate-500">待開發</span>
+            </div>
+
+            <!-- District 4 -->
+            <div id="district-4" class="col-span-1 flex flex-col items-center justify-center p-2 rounded-xl border border-dashed border-slate-700/60 bg-slate-900/50 backdrop-blur-sm transition-all duration-500">
+              <div class="district-icon w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 text-lg shadow">
+                <i class="fa-solid fa-building-columns"></i>
+              </div>
+              <span class="text-[11px] font-bold text-slate-400 mt-1">4. 財政建設樞紐</span>
+              <span class="district-status text-[9px] text-slate-500">待開發</span>
+            </div>
+
+            <!-- District 5 (Full width bottom) -->
+            <div id="district-5" class="col-span-2 flex flex-row items-center justify-center space-x-3 p-2 rounded-xl border border-dashed border-slate-700/60 bg-slate-900/50 backdrop-blur-sm transition-all duration-500">
+              <div class="district-icon w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 text-lg shadow">
+                <i class="fa-solid fa-faucet-drip"></i>
+              </div>
+              <div class="text-left">
+                <span class="text-[11px] font-bold text-slate-400 block">5. 央行水龍頭金庫</span>
+                <span class="district-status text-[9px] text-slate-500 block">待開發</span>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+
+      <!-- Mayor Quote / Info Box -->
+      <div class="mt-4 p-3 bg-slate-950/60 rounded-xl border border-slate-800 text-xs text-slate-400 flex items-start space-x-2">
+        <i class="fa-solid fa-circle-info text-blue-400 text-sm mt-0.5"></i>
+        <p id="city-description">市長，新城正等待您的宏觀調控策略！回答下方經濟決策題目，解鎖城市建設區域並提升建設資金。</p>
+      </div>
+    </section>
+
+    <!-- RIGHT PANEL: Quiz Engine & Results (7 Cols on large) -->
+    <section class="lg:col-span-7 bg-slate-900/90 border border-slate-800 rounded-3xl p-5 sm:p-7 shadow-2xl relative min-h-[520px] flex flex-col justify-between">
+      
+      <!-- QUIZ CARD VIEW -->
+      <div id="quiz-container" class="space-y-6">
+        
+        <!-- Header Question Info -->
+        <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+          <div class="flex items-center space-x-2">
+            <span id="question-badge" class="px-3 py-1 rounded-full text-xs font-bold bg-blue-500/20 text-blue-400 border border-blue-500/30">
+              題目 1 / 5
+            </span>
+            <span id="question-type-badge" class="px-2.5 py-1 rounded-full text-[10px] font-semibold bg-amber-500/10 text-amber-400 border border-amber-500/20">
+              單選題
+            </span>
+          </div>
+          <div class="text-xs text-slate-400 font-mono">
+            配分: <span class="text-amber-400 font-bold">200 分</span>
+          </div>
+        </div>
+
+        <!-- Question Title & Prompt -->
+        <div>
+          <h3 id="question-title" class="text-lg sm:text-xl font-bold text-white mb-2 leading-relaxed">
+            <!-- Dynamic Question Title -->
+          </h3>
+          <p id="question-prompt" class="text-sm text-slate-300 leading-normal bg-slate-950/50 p-3.5 rounded-xl border border-slate-800/80">
+            <!-- Dynamic Question Context -->
+          </p>
+        </div>
+
+        <!-- Options Container -->
+        <div id="options-container" class="space-y-3">
+          <!-- Dynamic Options HTML -->
+        </div>
+
+        <!-- Explanation Card (Hidden until submitted) -->
+        <div id="explanation-box" class="hidden p-4 rounded-2xl bg-slate-950/90 border border-slate-800 space-y-2">
+          <div id="explanation-header" class="font-bold text-sm flex items-center space-x-2">
+            <!-- Result Icon and Title -->
+          </div>
+          <p id="explanation-text" class="text-xs sm:text-sm text-slate-300 leading-relaxed">
+            <!-- Explanation Body -->
+          </p>
+        </div>
+      </div>
+
+      <!-- QUIZ CONTROLS & SUBMIT BUTTON -->
+      <div id="quiz-footer" class="mt-6 pt-4 border-t border-slate-800 flex justify-between items-center">
+        <button id="sound-toggle" onclick="toggleSound()" class="px-3 py-2 text-xs rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 flex items-center gap-2 transition">
+          <i id="sound-icon" class="fa-solid fa-volume-high text-blue-400"></i> 音效
+        </button>
+
+        <button id="action-btn" onclick="handleAction()" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-blue-900/30 active:scale-95 transition-all flex items-center gap-2">
+          <span>提交決策</span>
+          <i class="fa-solid fa-arrow-right"></i>
+        </button>
+      </div>
+
+      <!-- GAME COMPLETE / RESULT MODAL (Hidden by default) -->
+      <div id="result-screen" class="hidden flex-col items-center justify-center text-center space-y-6 py-4">
+        
+        <!-- Trophy Graphic -->
+        <div class="relative">
+          <div class="w-24 h-24 rounded-3xl bg-gradient-to-tr from-amber-500 via-yellow-300 to-amber-600 flex items-center justify-center shadow-2xl shadow-amber-500/30 animate-bounce">
+            <i class="fa-solid fa-trophy text-slate-950 text-5xl"></i>
+          </div>
+        </div>
+
+        <div>
+          <span class="text-xs font-bold uppercase tracking-widest text-amber-400">新城建設考評完成</span>
+          <h2 id="final-mayor-rank" class="text-2xl sm:text-3xl font-black text-white mt-1">
+            榮譽新城市長
+          </h2>
+          <p class="text-xs text-slate-400 mt-1">恭喜您完成所有經濟與宏觀調控戰略決策！</p>
+        </div>
+
+        <!-- Final Stats Grid -->
+        <div class="grid grid-cols-2 gap-4 w-full max-w-md bg-slate-950/80 p-4 rounded-2xl border border-slate-800">
+          <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800/60">
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">最終建設總資金</div>
+            <div id="final-score" class="text-xl font-black text-amber-300 mt-0.5">1000 M</div>
+          </div>
+          <div class="bg-slate-900/60 p-3 rounded-xl border border-slate-800/60">
+            <div class="text-[10px] text-slate-400 uppercase font-semibold">答對題數 / 正確率</div>
+            <div id="final-accuracy" class="text-xl font-black text-teal-300 mt-0.5">5 / 5 (100%)</div>
+          </div>
+        </div>
+
+        <!-- Microsoft Teams Share Section -->
+        <div class="w-full max-w-md bg-gradient-to-r from-indigo-950/80 to-slate-900 p-4 rounded-2xl border border-indigo-800/60 space-y-3">
+          <div class="flex items-center justify-center space-x-2 text-indigo-300 text-xs font-bold">
+            <i class="fa-brands fa-microsoft text-base"></i>
+            <span>分享您的新城戰績至 Microsoft Teams</span>
+          </div>
+          
+          <div class="flex flex-col sm:flex-row gap-2">
+            <!-- Native Teams Share Button -->
+            <button onclick="shareToTeamsDirect()" class="flex-1 py-2.5 px-4 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 transition active:scale-95">
+              <i class="fa-solid fa-paper-plane"></i>
+              直接分享到 Teams
+            </button>
+            
+            <!-- Copy Formatted Report Button -->
+            <button onclick="copyTeamsReport()" class="flex-1 py-2.5 px-4 bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 font-bold text-xs rounded-xl shadow-md flex items-center justify-center gap-2 transition active:scale-95">
+              <i class="fa-solid fa-copy"></i>
+              複製成果報告
+            </button>
+          </div>
+          <p id="share-toast" class="text-[11px] text-teal-400 hidden font-semibold">已成功複製報告至剪貼簿！可直接貼上 Teams 頻道。</p>
+        </div>
+
+        <!-- Restart Game Button -->
+        <button onclick="restartGame()" class="px-6 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-300 font-semibold text-xs rounded-xl border border-slate-700 transition">
+          <i class="fa-solid fa-rotate-right mr-1"></i> 重新開始決策
+        </button>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Footer -->
+  <footer class="w-full py-3 bg-slate-950 border-t border-slate-900 text-center text-xs text-slate-500">
+    <div class="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row justify-between items-center gap-2">
+      <span>© 新城遊戲：經濟與宏觀調控主題教學工具</span>
+      <span>建議使用 Microsoft Teams / 現代瀏覽器開啟</span>
+    </div>
+  </footer>
+
+  <script>
+    // --- SOUND EFFECTS VIA WEB AUDIO API ---
+    let soundEnabled = true;
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    let audioCtx = null;
+
+    function initAudio() {
+      if (!audioCtx) {
+        audioCtx = new AudioContext();
+      }
+    }
+
+    function playTone(freq, type = 'sine', duration = 0.15, gainVal = 0.1) {
+      if (!soundEnabled) return;
+      try {
+        initAudio();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = type;
+        osc.frequency.value = freq;
+        gain.gain.setValueAtTime(gainVal, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + duration);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + duration);
+      } catch (e) { console.log(e); }
+    }
+
+    function playSuccessSound() {
+      if (!soundEnabled) return;
+      playTone(523.25, 'triangle', 0.1, 0.15); // C5
+      setTimeout(() => playTone(659.25, 'triangle', 0.1, 0.15), 100); // E5
+      setTimeout(() => playTone(783.99, 'triangle', 0.2, 0.2), 200); // G5
+    }
+
+    function playErrorSound() {
+      if (!soundEnabled) return;
+      playTone(220, 'sawtooth', 0.2, 0.15);
+      setTimeout(() => playTone(180, 'sawtooth', 0.25, 0.15), 150);
+    }
+
+    function toggleSound() {
+      soundEnabled = !soundEnabled;
+      const icon = document.getElementById('sound-icon');
+      if (soundEnabled) {
+        icon.className = "fa-solid fa-volume-high text-blue-400";
+      } else {
+        icon.className = "fa-solid fa-volume-xmark text-slate-500";
+      }
+    }
+
+    // --- QUIZ DATA ---
+    const quizData = [
+      {
+        id: 1,
+        title: "題目一：鄧小平的「貓論」經濟學",
+        prompt: "鄧小平曾用「不管黑貓白貓，能捉到老鼠的就是好貓」來比喻什麼？",
+        type: "single",
+        score: 200,
+        options: [
+          { id: "A", text: "養貓一定要抓老鼠，否則不能養" },
+          { id: "B", text: "判斷經濟政策好壞的標準是能否發展生產力、增強國力和提高生活水平" },
+          { id: "C", text: "社會主義只能養白貓，市場經濟只能養黑貓" },
+          { id: "D", text: "抓老鼠一定要用計劃手段，不能用市場手段" }
+        ],
+        correct: ["B"],
+        explanation: "<b>正確答案為 B！</b><br>「貓論」打破了意識形態的束縛，強調<b>實事求是</b>。判斷任何經濟政策與體制改革好壞的核心標準，在於其是否能真正促進社會生產力發展、提升國家綜合國力與人民生活水平。",
+        districtName: "貓論廣場",
+        districtIcon: "fa-cat"
+      },
+      {
+        id: 2,
+        title: "題目二：政府的「遙控器」",
+        prompt: "教材中提到，中央政府通過「宏觀調控」引導市場重回正軌。請問宏觀調控的主要目的是什麼？",
+        type: "single",
+        score: 200,
+        options: [
+          { id: "A", text: "讓政府完全取代市場，決定所有商品價格" },
+          { id: "B", text: "對國民經濟進行調節和控制，促進市場供求平衡，令經濟持續穩定發展" },
+          { id: "C", text: "限制所有私營企業發展" },
+          { id: "D", text: "讓物價永遠保持不變" }
+        ],
+        correct: ["B"],
+        explanation: "<b>正確答案為 B！</b><br>市場機制有時會出現盲目性或失靈，政府的<b>宏觀調控</b>就像「遙控器」，旨在促進經濟總量平衡、優化經濟結構、維護市場持續健全運作，而非全盤取代市場。",
+        districtName: "遙控控制中心",
+        districtIcon: "fa-gamepad"
+      },
+      {
+        id: 3,
+        title: "題目三：行政指令的「雙刃劍」",
+        prompt: "行政指令（如規定商品價格、限制銀行貸款）效果迅速顯著，但為什麼中央政府逐步減少依賴它？",
+        type: "single",
+        score: 200,
+        options: [
+          { id: "A", text: "因為行政指令太慢了，跟不上經濟發展" },
+          { id: "B", text: "因為行政指令不利於市場經濟發展" },
+          { id: "C", text: "因為行政指令會導致政府沒錢賺" },
+          { id: "D", text: "因為行政指令只對國有企業有效" }
+        ],
+        correct: ["B"],
+        explanation: "<b>正確答案為 B！</b><br>過度使用行政指令容易硬性干預市場規律，削弱市場在資源配置中的決定性作用。因此現代宏觀調控更偏向運用<b>經濟手段</b>（如稅率、利率）和法律手段。",
+        districtName: "市場政策總部",
+        districtIcon: "fa-scale-balanced"
+      },
+      {
+        id: 4,
+        title: "題目四：財政政策的「蹺蹺板」",
+        prompt: "根據「主要的經濟手段及影響」，如果國家想刺激經濟發展，在財政政策上可以採取哪些措施？（複選題，請選出所有正確選項）",
+        type: "multiple",
+        score: 200,
+        options: [
+          { id: "A", text: "提高稅率，增加國家收入" },
+          { id: "B", text: "減免稅項，鼓勵企業投資" },
+          { id: "C", text: "增加公共開支，投資基礎設施建設" },
+          { id: "D", text: "減少公共開支，抑制經濟增長" }
+        ],
+        correct: ["B", "C"],
+        explanation: "<b>正確答案為 B 與 C！</b><br><b>擴張性財政政策</b>：當經濟放緩時，政府通過<b>減免稅收</b>（降低企業成本）與<b>增加公共開支</b>（如修路建鐵路）來刺激市場需求、帶動就業與投資。",
+        districtName: "財政建設樞紐",
+        districtIcon: "fa-building-columns"
+      },
+      {
+        id: 5,
+        title: "題目五：貨幣政策的「水龍頭」",
+        prompt: "教材插圖中把貨幣政策比喻成一個「水龍頭」，裡面流出鈔票。如果國家想抑制經濟過熱，應該怎麼擰這個「水龍頭」？",
+        type: "single",
+        score: 200,
+        options: [
+          { id: "A", text: "把水龍頭擰大（增加貨幣供應），並降低利率" },
+          { id: "B", text: "把水龍頭擰小（減少貨幣供應），並提高利率" },
+          { id: "C", text: "把水龍頭擰大（增加貨幣供應），並提高利率" },
+          { id: "D", text: "把水龍頭擰小（減少貨幣供應），並降低利率" }
+        ],
+        correct: ["B"],
+        explanation: "<b>正確答案為 B！</b><br>當經濟過熱、通膨壓力大時，中央銀行會採取<b>緊縮性貨幣政策</b>：將「水龍頭」擰小（<b>減少市場貨幣供應</b>）並<b>提高利率</b>，以冷卻過度投機與過熱投資。",
+        districtName: "央行水龍頭金庫",
+        districtIcon: "fa-faucet-drip"
+      }
+    ];
+
+    // --- GAME STATE ---
+    let currentQuestionIndex = 0;
+    let score = 0;
+    let selectedAnswers = [];
+    let isSubmitted = false;
+    let userPerformance = [];
+
+    // --- INITIALIZATION ---
+    window.onload = function() {
+      loadQuestion(0);
+    };
+
+    function loadQuestion(index) {
+      isSubmitted = false;
+      selectedAnswers = [];
+      const q = quizData[index];
+
+      // Update Top Nav Progress
+      document.getElementById('progress-text').innerText = `${index + 1} / ${quizData.length}`;
+      document.getElementById('question-badge').innerText = `題目 ${index + 1} / ${quizData.length}`;
+      document.getElementById('question-type-badge').innerText = q.type === 'multiple' ? '複選題 (多選)' : '單選題';
+
+      // Update Question Content
+      document.getElementById('question-title').innerText = q.title;
+      document.getElementById('question-prompt').innerText = q.prompt;
+
+      // Reset & Hide Explanation
+      const expBox = document.getElementById('explanation-box');
+      expBox.classList.add('hidden');
+
+      // Update Action Button
+      const actionBtn = document.getElementById('action-btn');
+      actionBtn.innerHTML = `<span>提交決策</span><i class="fa-solid fa-paper-plane"></i>`;
+      actionBtn.disabled = false;
+
+      // Render Options
+      const optionsContainer = document.getElementById('options-container');
+      optionsContainer.innerHTML = '';
+
+      q.options.forEach(opt => {
+        const optionDiv = document.createElement('div');
+        optionDiv.className = `option-item p-3.5 sm:p-4 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-800/60 hover:border-blue-500/50 cursor-pointer transition flex items-start space-x-3`;
+        optionDiv.onclick = () => selectOption(opt.id, q.type);
+        optionDiv.id = `opt-${opt.id}`;
+
+        const inputType = q.type === 'multiple' ? 'checkbox' : 'radio';
+        optionDiv.innerHTML = `
+          <div class="mt-0.5 flex-shrink-0">
+            <div id="check-${opt.id}" class="w-5 h-5 rounded-${q.type === 'multiple' ? 'md' : 'full'} border border-slate-600 flex items-center justify-center text-xs font-bold text-transparent">
+              <i class="fa-solid fa-check"></i>
+            </div>
+          </div>
+          <div class="flex-1 text-xs sm:text-sm text-slate-200">
+            <span class="font-bold mr-1 text-blue-400">${opt.id}.</span> ${opt.text}
+          </div>
+        `;
+        optionsContainer.appendChild(optionDiv);
+      });
+    }
+
+    function selectOption(optionId, type) {
+      if (isSubmitted) return;
+      playTone(400, 'sine', 0.05, 0.05);
+
+      if (type === 'single') {
+        selectedAnswers = [optionId];
+        // Reset styles for all options
+        quizData[currentQuestionIndex].options.forEach(o => {
+          const el = document.getElementById(`opt-${o.id}`);
+          const chk = document.getElementById(`check-${o.id}`);
+          el.className = `option-item p-3.5 sm:p-4 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-800/60 hover:border-blue-500/50 cursor-pointer transition flex items-start space-x-3`;
+          chk.className = `w-5 h-5 rounded-full border border-slate-600 flex items-center justify-center text-xs font-bold text-transparent`;
+        });
+        // Set active style for selected
+        const selEl = document.getElementById(`opt-${optionId}`);
+        const selChk = document.getElementById(`check-${optionId}`);
+        selEl.className = `option-item p-3.5 sm:p-4 rounded-xl border border-blue-500 bg-blue-950/30 ring-1 ring-blue-500/50 cursor-pointer transition flex items-start space-x-3`;
+        selChk.className = `w-5 h-5 rounded-full border border-blue-400 bg-blue-500 text-white flex items-center justify-center text-xs font-bold`;
+
+      } else { // Multiple choice
+        const idx = selectedAnswers.indexOf(optionId);
+        if (idx > -1) {
+          selectedAnswers.splice(idx, 1);
+          const el = document.getElementById(`opt-${optionId}`);
+          const chk = document.getElementById(`check-${optionId}`);
+          el.className = `option-item p-3.5 sm:p-4 rounded-xl border border-slate-800 bg-slate-950/60 hover:bg-slate-800/60 hover:border-blue-500/50 cursor-pointer transition flex items-start space-x-3`;
+          chk.className = `w-5 h-5 rounded-md border border-slate-600 flex items-center justify-center text-xs font-bold text-transparent`;
+        } else {
+          selectedAnswers.push(optionId);
+          const el = document.getElementById(`opt-${optionId}`);
+          const chk = document.getElementById(`check-${optionId}`);
+          el.className = `option-item p-3.5 sm:p-4 rounded-xl border border-blue-500 bg-blue-950/30 ring-1 ring-blue-500/50 cursor-pointer transition flex items-start space-x-3`;
+          chk.className = `w-5 h-5 rounded-md border border-blue-400 bg-blue-500 text-white flex items-center justify-center text-xs font-bold`;
+        }
+      }
+    }
+
+    function handleAction() {
+      if (!isSubmitted) {
+        submitAnswer();
+      } else {
+        nextQuestion();
+      }
+    }
+
+    function submitAnswer() {
+      if (selectedAnswers.length === 0) {
+        alert("請先選擇一個答案再提交決策！");
+        return;
+      }
+
+      isSubmitted = true;
+      const q = quizData[currentQuestionIndex];
+      
+      // Check correctness
+      const sortedSelected = [...selectedAnswers].sort();
+      const sortedCorrect = [...q.correct].sort();
+      const isCorrect = JSON.stringify(sortedSelected) === JSON.stringify(sortedCorrect);
+
+      userPerformance.push({
+        qId: q.id,
+        isCorrect: isCorrect,
+        selected: selectedAnswers,
+        correct: q.correct
+      });
+
+      // Show Explanation Card
+      const expBox = document.getElementById('explanation-box');
+      const expHeader = document.getElementById('explanation-header');
+      const expText = document.getElementById('explanation-text');
+      expBox.classList.remove('hidden');
+
+      if (isCorrect) {
+        score += q.score;
+        playSuccessSound();
+        expHeader.className = "font-bold text-sm text-teal-400 flex items-center gap-2";
+        expHeader.innerHTML = `<i class="fa-solid fa-circle-check text-lg"></i> <span>決策精準！解鎖 ${q.districtName}</span>`;
+        
+        // Confetti effect on correct
+        confetti({
+          particleCount: 40,
+          spread: 60,
+          origin: { y: 0.7 }
+        });
+
+        // Upgrade District on Map
+        unlockDistrict(q.id, true);
+
+      } else {
+        playErrorSound();
+        expHeader.className = "font-bold text-sm text-rose-400 flex items-center gap-2";
+        expHeader.innerHTML = `<i class="fa-solid fa-circle-xmark text-lg"></i> <span>決策有誤！(正確答案: ${q.correct.join(', ')})</span>`;
+        unlockDistrict(q.id, false);
+      }
+
+      expText.innerHTML = q.explanation;
+
+      // Update Score Display
+      document.getElementById('score-display').innerText = `${score} M`;
+
+      // Update Button Text
+      const actionBtn = document.getElementById('action-btn');
+      if (currentQuestionIndex < quizData.length - 1) {
+        actionBtn.innerHTML = `<span>前往下一區</span><i class="fa-solid fa-arrow-right"></i>`;
+      } else {
+        actionBtn.innerHTML = `<span>結算建設成果</span><i class="fa-solid fa-trophy"></i>`;
+      }
+    }
+
+    function unlockDistrict(districtId, isCorrect) {
+      const el = document.getElementById(`district-${districtId}`);
+      if (!el) return;
+
+      const iconBox = el.querySelector('.district-icon');
+      const statusText = el.querySelector('.district-status');
+
+      if (isCorrect) {
+        el.className = el.className.replace('border-dashed border-slate-700/60 bg-slate-900/50', 'border-solid border-teal-500/80 bg-teal-950/30 pulse-glow');
+        iconBox.className = "district-icon w-10 h-10 rounded-full bg-teal-500 text-slate-950 text-lg font-bold shadow-lg shadow-teal-500/30 animate-float";
+        statusText.innerText = "已建成 (+200M)";
+        statusText.className = "district-status text-[9px] text-teal-300 font-bold";
+      } else {
+        el.className = el.className.replace('border-dashed border-slate-700/60 bg-slate-900/50', 'border-solid border-rose-500/60 bg-rose-950/20');
+        iconBox.className = "district-icon w-10 h-10 rounded-full bg-rose-900/80 text-rose-300 text-lg shadow";
+        statusText.innerText = "待審查改善";
+        statusText.className = "district-status text-[9px] text-rose-400";
+      }
+
+      // Update active SVG road path offset
+      const path = document.getElementById('road-active-path');
+      const newOffset = 300 - (districtId * 60);
+      path.setAttribute('stroke-dashoffset', newOffset);
+    }
+
+    function nextQuestion() {
+      if (currentQuestionIndex < quizData.length - 1) {
+        currentQuestionIndex++;
+        loadQuestion(currentQuestionIndex);
+      } else {
+        showFinalResults();
+      }
+    }
+
+    function showFinalResults() {
+      document.getElementById('quiz-container').classList.add('hidden');
+      document.getElementById('quiz-footer').classList.add('hidden');
+      document.getElementById('result-screen').classList.remove('hidden');
+
+      const correctCount = userPerformance.filter(p => p.isCorrect).length;
+      const accuracyPct = Math.round((correctCount / quizData.length) * 100);
+
+      document.getElementById('final-score').innerText = `${score} M`;
+      document.getElementById('final-accuracy').innerText = `${correctCount} / ${quizData.length} (${accuracyPct}%)`;
+
+      // Assign Mayoral Rank Title based on score
+      let rankTitle = "見習規劃員";
+      if (score === 1000) {
+        rankTitle = "🏆 新城首席經濟特戰司令 (滿分)";
+      } else if (score >= 800) {
+        rankTitle = "🥇 卓越榮譽新城市長";
+      } else if (score >= 600) {
+        rankTitle = "🥈 資深經濟發展顧問";
+      } else {
+        rankTitle = "🥉 城市實習市政官";
+      }
+
+      document.getElementById('final-mayor-rank').innerText = rankTitle;
+      document.getElementById('mayor-title').innerText = rankTitle.split(' ')[1] || rankTitle;
+
+      // Major Victory Confetti
+      confetti({
+        particleCount: 100,
+        spread: 100,
+        origin: { y: 0.5 }
+      });
+    }
+
+    function generateShareReportText() {
+      const correctCount = userPerformance.filter(p => p.isCorrect).length;
+      const rankTitle = document.getElementById('final-mayor-rank').innerText;
+      
+      return `🏙️ 【新城遊戲：經濟與宏觀調控大賽】建設成果報告\n` +
+             `----------------------------------------\n` +
+             `👤 市長階級：${rankTitle}\n` +
+             `💰 建設資金：${score} M\n` +
+             `🎯 決策正確率：${correctCount} / 5 (${(correctCount/5)*100}%)\n` +
+             `----------------------------------------\n` +
+             `👉 快來挑戰你的經濟學宏觀調控能力，打造繁榮新城！`;
+    }
+
+    // Direct Microsoft Teams Deep Link Share
+    function shareToTeamsDirect() {
+      const text = encodeURIComponent(generateShareReportText());
+      // Teams official share popup URL
+      const teamsShareUrl = `https://teams.microsoft.com/share?text=${text}`;
+      window.open(teamsShareUrl, '_blank', 'width=600,height=600');
+    }
+
+    // Copy to Clipboard fallback
+    function copyTeamsReport() {
+      const reportText = generateShareReportText();
+      
+      // Clipboard API fallback for standard frame environment
+      const textarea = document.createElement('textarea');
+      textarea.value = reportText;
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+        const toast = document.getElementById('share-toast');
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 3500);
+      } catch (err) {
+        alert("複製失敗，請手動複製以下文本:\n\n" + reportText);
+      }
+      document.body.removeChild(textarea);
+    }
+
+    function restartGame() {
+      currentQuestionIndex = 0;
+      score = 0;
+      userPerformance = [];
+      
+      // Reset District Map Pins
+      for (let i = 1; i <= 5; i++) {
+        const el = document.getElementById(`district-${i}`);
+        if (el) {
+          el.className = `col-span-${i===5?'2':'1'} flex ${i===5?'flex-row space-x-3':'flex-col'} items-center justify-center p-2 rounded-xl border border-dashed border-slate-700/60 bg-slate-900/50 backdrop-blur-sm transition-all duration-500`;
+          const iconBox = el.querySelector('.district-icon');
+          iconBox.className = "district-icon w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-slate-500 text-lg shadow";
+          const statusText = el.querySelector('.district-status');
+          statusText.innerText = "待開發";
+          statusText.className = "district-status text-[9px] text-slate-500";
+        }
+      }
+
+      document.getElementById('road-active-path').setAttribute('stroke-dashoffset', '300');
+      document.getElementById('score-display').innerText = "0 M";
+      document.getElementById('mayor-title').innerText = "見習市長";
+
+      document.getElementById('result-screen').classList.add('hidden');
+      document.getElementById('quiz-container').classList.remove('hidden');
+      document.getElementById('quiz-footer').classList.remove('hidden');
+
+      loadQuestion(0);
+    }
+  </script>
+</body>
+  </html>
